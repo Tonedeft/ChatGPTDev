@@ -1,0 +1,16 @@
+{
+  "name": "ChatGPTDev HTTP Request Logger",
+  "version": "1.0",
+  "manifest_version": 3,
+  "permissions": [
+    "webRequest",
+    "storage",
+    "declarativeNetRequest"
+  ],
+  "host_permissions": [
+      "<all_urls>"
+  ],
+  "background": {
+    "service_worker": "background.js"
+  }
+}

@@ -1,0 +1,20 @@
+{
+    "manifest_version": 3,
+    "name": "Video Downloader",
+    "version": "1.0",
+    "description": "Download videos from web pages",
+    "permissions": [
+      "activeTab",
+      "scripting"
+    ],
+    "host_permissions": [
+        "<all_urls>"
+    ],
+    "content_scripts": [
+      {
+        "matches": ["<all_urls>"],
+        "js": ["content.js"]
+      }
+    ]
+  }
+  
