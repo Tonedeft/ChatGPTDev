@@ -1,0 +1,757 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<title>My Video Game</title>
+	<style>
+		body {
+			background-color: darkgreen;
+		}
+		.object {
+			position: absolute;
+			top: 50%;
+			left: 50%;
+			transform: translate(-50%, -50%);
+			cursor: pointer;
+		}
+	</style>
+</head>
+<body>
+
+	<canvas id="tableCanvas" width="960" height="960"></canvas>
+
+	<script>
+		var canvas = document.getElementById("tableCanvas");
+		clickableObjects = [];
+		menuObjects = [];
+		curMenu = null;
+		var debugGame = false;
+
+		var opus1_fire_earth_starter_deck = [
+			"1-004C",
+			"1-004C",
+			"1-010C",
+			"1-010C",
+			"1-011C",
+			"1-011C",
+			"1-014C",
+			"1-014C",
+			"1-024C",
+			"1-024C",
+			"1-025C",
+			"1-025C",
+			"1-092C",
+			"1-092C",
+			"1-099C",
+			"1-099C",
+			"1-106C",
+			"1-106C",
+			"1-120C",
+			"1-120C",
+			"1-187S",
+			"1-187S",
+			"1-187S",
+			"1-188S",
+			"1-188S",
+			"1-188S",
+			"1-189S",
+			"1-189S",
+			"1-189S",
+			"1-190S",
+			"1-190S",
+			"1-190S",
+			"1-191S",
+			"1-191S",
+			"1-191S",
+			"1-202S",
+			"1-202S",
+			"1-202S",
+			"1-203S",
+			"1-203S",
+			"1-203S",
+			"1-204S",
+			"1-204S",
+			"1-204S",
+			"1-205S",
+			"1-205S",
+			"1-205S",
+			"1-206S",
+			"1-206S",
+			"1-206S",
+		];
+		var opus1_water_wind_starter_deck = [
+			"1-068C",
+			"1-068C",
+			"1-074R",
+			"1-074R",
+			"1-077C",
+			"1-077C",
+			"1-078C",
+			"1-078C",
+			"1-087C",
+			"1-087C",
+			"1-159C",
+			"1-159C",
+			"1-165C",
+			"1-165C",
+			"1-167C",
+			"1-167C",
+			"1-168C",
+			"1-168C",
+			"1-178R",
+			"1-178R",
+			"1-197S",
+			"1-197S",
+			"1-197S",
+			"1-198S",
+			"1-198S",
+			"1-198S",
+			"1-199S",
+			"1-199S",
+			"1-199S",
+			"1-200S",
+			"1-200S",
+			"1-200S",
+			"1-201S",
+			"1-201S",
+			"1-201S",
+			"1-212S",
+			"1-212S",
+			"1-212S",
+			"1-213S",
+			"1-213S",
+			"1-213S",
+			"1-214S",
+			"1-214S",
+			"1-214S",
+			"1-215S",
+			"1-215S",
+			"1-215S",
+			"1-216S",
+			"1-216S",
+			"1-216S",
+		];
+
+		canvas.addEventListener('click', function(event) {
+			var xVal = event.pageX - canvas.offsetLeft,
+			yVal = event.pageY - canvas.offsetTop;
+			console.log("Clicked " + xVal + ", " + yVal);
+
+			if (curMenu) {
+				console.log("Menu open");
+
+				menuObjects.forEach(function(ele) {
+					ele.tryClick(xVal, yVal);
+					ele.disable();
+				});
+
+				menuObjects = [];
+				curMenu.disable();
+				curMenu = null;
+				redraw();
+			} else {
+				clickableObjects.forEach(function(ele) {
+					ele.tryClick(xVal, yVal);
+				});
+			}
+
+		}, false);
+
+		class DrawableObject {
+			constructor(offsetX, offsetY, width, height) {
+				this.offsetX = offsetX;
+				this.offsetY = offsetY;
+				this.width = width;
+				this.height = height;
+
+				console.log("Geometry of object = [" + this.offsetX + ", " + this.offsetY + ", " + this.width + ", " + this.height + "]")
+
+				clickableObjects.push(this);
+			}
+
+			destructor() {
+				console.log("Deleting DrawableObject");
+				var index = clickableObjects.find(e => e == this);
+				var z = clickableObjects.splice(index, index);
+			}
+
+			draw(canvas, options) {
+				var ctx = canvas.getContext("2d");
+
+				// If debug mode, draw the outline
+				if (debugGame) {
+					console.log("DRAWING LINES");
+					ctx.lineWidth = 2;
+					ctx.strokeStyle = "red";
+					ctx.moveTo(this.offsetX,this.offsetY);
+					ctx.lineTo(this.offsetX+this.width,this.offsetY);
+					ctx.lineTo(this.offsetX+this.width,this.offsetY+this.height);
+					ctx.lineTo(this.offsetX,this.offsetY+this.height);
+					ctx.lineTo(this.offsetX,this.offsetY);
+					ctx.stroke();
+				}
+			}
+
+			tryClick(xVal, yVal) {
+				{{/* console.log("Try Click"); */}}
+				if ((xVal >= this.offsetX) && (xVal <= this.offsetX+this.width) &&
+				    (yVal >= this.offsetY) && (yVal <= this.offsetY+this.height)) {
+					{{/* console.log("Yes, clicked"); */}}
+					this.act();
+				}
+			}
+
+			act() {
+				// does nothing
+			}
+
+			setOffsets(offX, offY) {
+				this.offsetX = offX;
+				this.offsetY = offY;
+			}	
+
+			getOffsetX() {
+				return this.offsetX;
+			}
+			getOffsetY() {
+				return this.offsetY;
+			}
+		}
+
+		class MenuItem extends DrawableObject {
+			constructor(offsetX, offsetY, name, chosenOp) {
+				super(offsetX, offsetY, 200, 40);
+				this.name = name;
+				this.chosenOp = chosenOp;
+				this.is_active = true;
+			}
+
+			disable() {
+				this.is_active = false;
+			}
+
+			draw(canvas, options) {
+				if (this.is_active) {
+					super.draw(canvas, options);
+					var ctx = canvas.getContext("2d");
+
+					ctx.fillStyle = "gray";
+					ctx.fillRect(this.offsetX, this.offsetY, this.width, this.height);
+
+					// Draw the Text
+					ctx.font = "36px Arial italic";
+					ctx.fillStyle = "black";
+					ctx.fillText(this.name, this.offsetX, this.offsetY+this.height-2);
+				}
+			}
+
+			tryClick(xVal, yVal) {
+				if (this.is_active) {
+					{{/* console.log("Try Click"); */}}
+					if ((xVal >= this.offsetX) && (xVal <= this.offsetX+this.width) &&
+						(yVal >= this.offsetY) && (yVal <= this.offsetY+this.height)) {
+						{{/* console.log("Yes, clicked"); */}}
+						this.chosenOp.act();
+					}
+				}
+			}
+		}
+
+		class ClickMenu extends DrawableObject {
+			constructor(offsetX, offsetY) {
+				super(offsetX, offsetY, 200, 280);
+				menuObjects = [];
+				this.is_active = true;
+			}
+
+			disable() {
+				this.is_active = false;
+			}
+
+			draw(canvas, options) {
+				if (this.is_active) {
+					super.draw(canvas, options);
+					var ctx = canvas.getContext("2d");
+
+					ctx.fillStyle = "lightGray";
+					ctx.fillRect(this.offsetX, this.offsetY, this.width, this.height);
+
+					for (let i = 0; i < menuObjects.length; ++i) {
+						menuObjects[i].draw(canvas, options);
+					}
+				}
+			}
+		}
+
+		class DeckMenu extends ClickMenu {
+			constructor(offsetX, offsetY, chosenDeck) {
+				super(offsetX, offsetY);
+				this.chosenDeck = chosenDeck;
+				menuObjects.push(new MenuItem(this.offsetX, this.offsetY, "Draw Card", new AddCardFromDeckToHandOp(chosenDeck)));
+				menuObjects.push(new MenuItem(this.offsetX, this.offsetY+40, "Shuffle", new ShuffleDeckOp(chosenDeck)));
+			}
+		}
+
+		class CardMenu extends ClickMenu {
+			constructor(offsetX, offsetY, chosenCard) {
+				super(offsetX, offsetY);
+				this.card = chosenCard;
+			}
+
+			draw(canvas, options) {
+				if (this.is_active) {
+					super.draw(canvas, options);
+					var ctx = canvas.getContext("2d");
+					
+					// Display the image
+					// Load the image
+					var img = new Image();
+					img.src=this.card.image_link;
+
+					var imx = this.offsetX+240;
+					var imy = this.offsetY;
+					var imw = this.width*2;
+					var imh = this.height*2;
+					img.onload = function() {
+						ctx.drawImage(img,imx,imy,imw,imh);
+					};
+				}
+			}
+		}
+
+		class HandMenu extends CardMenu {
+			constructor(offsetX, offsetY, chosenCard, is_player) {
+				super(offsetX, offsetY, chosenCard);
+				var hand = getHand(is_player);
+				var deck = getDeck(is_player);
+
+				menuObjects.push(new MenuItem(this.offsetX, this.offsetY, "TopOfDeck", new MoveCardFromHandToTopOfDeckOp(chosenCard, hand, deck)));
+			}
+		}
+
+		// Operations changing the state of the board
+		class AddCardFromDeckToHandOp {
+			constructor(deck) {
+				this.deck = deck;
+			}
+
+			act() {
+				this.deck.addTopCardToHand();
+			}
+		}
+		class AddCardFromHandToFieldOp {
+			constructor(card, hand) {
+				this.card = card;
+				this.hand = hand;
+			}
+
+			act() {
+				this.deck.addTopCardToHand();
+			}
+		}
+		class ShuffleDeckOp {
+			constructor(deck) {
+				this.deck = deck;
+			}
+
+			act() {
+				this.deck.shuffle();
+			}
+		}
+		class MoveCardFromHandToTopOfDeckOp {
+			constructor(card, hand, deck) {
+				this.card = card;
+				this.hand = hand;
+				this.deck = deck;
+			}
+
+			act() {
+				this.hand.remove_card(this.card);
+				this.deck.addCardToTopOfDeck(this.card);
+			}
+		}
+
+		class Card extends DrawableObject {
+			constructor(offsetX, offsetY, id, is_player, player_can_see) {
+				super(offsetX,offsetY,(is_player ? -1 : 1)*400/4,(is_player ? -1 : 1)*558/4);
+				console.log("Creating Card: " + id);
+				this.id = id;
+				// https://static.wikia.nocookie.net/final-fantasy-card-game/images/f/f4/1-001H.png
+				// https://fftcg.cdn.sewest.net/images/cards/full/1-001H_eg.jpg
+				// https://fftcg.cdn.sewest.net/images/cards/full/1-046H_eg.jpg
+				// https://static.wikia.nocookie.net/final-fantasy-card-game/images/6/65/1-046H.png/revision/latest?cb=20161111145220
+				this.image_link = "https://fftcg.cdn.sewest.net/images/cards/full/" + this.id + "_eg.jpg";
+				this.back_image_link = "https://static.wikia.nocookie.net/final-fantasy-card-game/images/1/16/Card_Back_Black.png";
+
+
+				if (debugGame) {
+					this.player_can_see = true;
+				} else {
+					this.player_can_see = player_can_see;
+				}
+
+				this.is_player = is_player;
+				console.log(this.image_link);
+			}
+
+			draw(canvas, options) {
+				console.log("Drawing Card: " + this.id);
+				super.draw(canvas, options);
+				var ctx = canvas.getContext("2d");
+
+				// Display the image
+				// Load the image
+				var img = new Image();
+				if (this.player_can_see) {
+					img.src=this.image_link;
+				} else {
+					img.src=this.back_image_link;
+				}
+
+				var imx = this.offsetX;
+				var imy = this.offsetY;
+				var imw = this.width;
+				var imh = this.height;
+				img.onload = function() {
+					ctx.drawImage(img,imx,imy,imw,imh);
+				};
+
+				// Draw the Text
+				{{/* ctx.font = "30px Arial Italic";
+				ctx.fillText(this.id, 10, 10); */}}
+			}
+
+			tryClick(xVal, yVal) {
+				if (this.is_player) {
+					if ((xVal <= this.offsetX) && (xVal >= this.offsetX+this.width) &&
+						(yVal <= this.offsetY) && (yVal >= this.offsetY+this.height)) {
+						console.log("Yes, clicked card: " + this.is_player);
+						this.act();
+					}
+				} else {
+					if ((xVal >= this.offsetX) && (xVal <= this.offsetX+this.width) &&
+						(yVal >= this.offsetY) && (yVal <= this.offsetY+this.height)) {
+						console.log("Yes, clicked card: " + this.is_player);
+						this.act();
+					}
+				}
+			}
+			
+			act() {
+				curMenu = new HandMenu(200,200,this,this.is_player);
+				redraw();
+			}
+		}
+
+		// Create 2 Decks
+		class Deck extends DrawableObject {
+			constructor(offsetX, offsetY, deckContents, is_player) {
+				super(offsetX,offsetY,(is_player ? -1 : 1)*400/4,(is_player ? -1 : 1)*558/4);
+				this.cards = [];
+				this.image_link = "https://static.wikia.nocookie.net/final-fantasy-card-game/images/1/16/Card_Back_Black.png";
+				this.is_player = is_player;
+
+				for (let i = 0; i < deckContents.length; i++) {
+					this.cards.push(deckContents[i]);
+				}
+
+				this.shuffle();
+			}
+
+			default() {
+				for (let i = 0; i < 10; i++) {
+					this.cards.push("1-00" + i + "H");
+				}
+				for (let i = 10; i < 50; i++) {
+					this.cards.push("1-0" + i + "H");
+				}
+			}
+
+			drawTexts(canvas, options) {
+				var ctx = canvas.getContext("2d");
+				// Draw the Text
+				ctx.font = "30px Arial italic";
+				ctx.fillStyle = "white";
+
+				var x = this.offsetX+5;
+				var y = this.offsetY+140-5;
+				if (this.is_player) {
+					x += this.width;
+					y += this.height;
+				}
+
+				ctx.fillText(this.cards.length, x, y);
+			}
+
+			draw(canvas, options) {
+				console.log("Drawing Deck");
+				super.draw(canvas, options);
+				var ctx = canvas.getContext("2d");
+
+				// Display the image
+				// Load the image
+				var img = new Image();
+				img.src=this.image_link;
+				var imx = this.offsetX;
+				var imy = this.offsetY;
+				var imw = this.width;
+				var imh = this.height;
+				var card = this;
+				img.onload = function() {
+					ctx.drawImage(img,imx,imy,imw,imh);
+					card.drawTexts(canvas, options);
+				};
+
+				// Draw the Text
+				this.drawTexts(canvas, options);
+			}
+
+			act() {
+				curMenu = new DeckMenu(400,400,this);
+				redraw();
+			}
+
+			addTopCardToHand() {
+				var card = this.takeTopCard();
+				getHand(this.is_player).add_card(card);
+				redraw();
+			}
+
+			addCardToTopOfDeck(card) {
+				this.cards.push(card.id);
+			}
+
+			shuffle() {
+				console.log("Shuffling deck");
+				this.cards.sort(() => Math.random() - 0.5);
+			}
+
+			takeTopCard() {
+				var next = this.cards.pop();
+				console.log("Taking " + next + " card from top of deck");
+				return next;
+			}
+
+			tryClick(xVal, yVal) {
+				if (this.is_player) {
+					if ((xVal <= this.offsetX) && (xVal >= this.offsetX+this.width) &&
+						(yVal <= this.offsetY) && (yVal >= this.offsetY+this.height)) {
+						console.log("Yes, clicked deck: " + this.is_player);
+						this.act();
+					}
+				} else {
+					if ((xVal >= this.offsetX) && (xVal <= this.offsetX+this.width) &&
+						(yVal >= this.offsetY) && (yVal <= this.offsetY+this.height)) {
+						console.log("Yes, clicked deck: " + this.is_player);
+						this.act();
+					}
+				}
+			}
+
+		}
+
+		class Zone extends DrawableObject {
+			constructor(offsetX, offsetY, is_player) {
+				super(offsetX, offsetY, (is_player ? -1 : 1)*640, (is_player ? -1 : 1)*140);
+				this.is_player = is_player;
+
+				this.cards_in_zone = [];
+
+				{{/* this.testCard = new Card(this.offsetX, this.offsetY,"1-001H", is_player); */}}
+				{{/* this.add_card("1-001H"); */}}
+			}
+
+			draw(canvas, options) {
+				console.log("Drawing Hand");
+				super.draw(canvas, options);
+				
+				this.cards_in_zone.forEach(function(card) {
+					card.draw(canvas, options);
+				});
+			}
+
+			reposition_cards() {
+				// card width = 100
+				// card height = 140
+				// this.width = 640?
+				
+				for (let i = 0; i < this.cards_in_zone.length; i++) {
+					console.log("Positioning card " + i);
+					this.cards_in_zone[i].setOffsets(this.offsetX+(124*i*(this.is_player?-1:1)), this.cards_in_zone[i].getOffsetY());
+				}
+			}
+
+			add_card_obj(card) {
+				this.cards_in_zone.push(new_card);
+				this.reposition_cards();
+			}
+
+			add_card(id) {
+				console.log("Adding card " + id + " to hand");
+				var num_cards = this.cards_in_zone.length;
+				var new_card = new Card(this.offsetX, this.offsetY, id, this.is_player, this.is_player);
+				this.add_card_obj(new_card);
+			}
+		}
+
+		class Hand extends DrawableObject {
+			constructor(offsetX, offsetY, is_player) {
+				super(offsetX, offsetY, (is_player ? -1 : 1)*640, (is_player ? -1 : 1)*140);
+				this.is_player = is_player;
+
+				this.cards_in_hand = [];
+
+				{{/* this.testCard = new Card(this.offsetX, this.offsetY,"1-001H", is_player); */}}
+				{{/* this.add_card("1-001H"); */}}
+			}
+
+			draw(canvas, options) {
+				console.log("Drawing Hand");
+				super.draw(canvas, options);
+				
+				this.cards_in_hand.forEach(function(card) {
+					card.draw(canvas, options);
+				});
+			}
+
+			reposition_cards() {
+				// card width = 100
+				// card height = 140
+				// this.width = 640?
+				
+				for (let i = 0; i < this.cards_in_hand.length; i++) {
+					console.log("Positioning card " + i);
+					this.cards_in_hand[i].setOffsets(this.offsetX+(124*i*(this.is_player?-1:1)), this.cards_in_hand[i].getOffsetY());
+				}
+			}
+
+			add_card(id) {
+				console.log("Adding card " + id + " to hand");
+				var num_cards = this.cards_in_hand.length;
+				var new_card = new Card(this.offsetX, this.offsetY, id, this.is_player, this.is_player);
+				this.cards_in_hand.push(new_card);
+				this.reposition_cards();
+			}
+
+			remove_card(card) {
+				console.log("Removing card " + card.id + " from hand");
+				var index = this.cards_in_hand.indexOf(card);
+				if (index < 0) {
+					console.log("UNEXPECTED ERROR: couldn't find card in hand");
+					return;
+				}
+				// remove 1 card at the found index
+				const removed = this.cards_in_hand.splice(index,1);
+				console.log("Found and removed card " + card.id + " from index " + index);
+				this.reposition_cards();
+			}
+		}
+
+		class PlayerBoard extends DrawableObject {
+			constructor(offsetX, offsetY, is_player) {
+				super(offsetX,offsetY,canvas.width,canvas.height);
+				if (is_player) {
+					this.deck = new Deck(this.offsetX+canvas.width - (this.offsetX+14), this.offsetY+canvas.height - (this.offsetY+10), opus1_fire_earth_starter_deck, is_player);
+					this.hand = new Hand(this.offsetX+canvas.width - (this.offsetX+128), this.offsetY+canvas.height - (this.offsetY+10), is_player);
+				} else {
+					this.deck = new Deck(this.offsetX+14, this.offsetY+10, opus1_water_wind_starter_deck, is_player);
+					this.hand = new Hand(this.offsetX+128, this.offsetY+10, is_player);
+				}
+				this.is_player = is_player;
+			}
+
+			draw(canvas, options) {
+				console.log("Drawing PlayerBoard");
+				super.draw(canvas, options);
+
+				this.deck.draw(canvas, options);
+				this.hand.draw(canvas, options);
+			}
+
+			get_hand() {
+				return this.hand;
+			}
+			get_deck() {
+				return this.deck;
+			}
+		}
+
+		class TableTop extends DrawableObject {
+			constructor() {
+				super(0,0,canvas.width,canvas.height);
+				console.log("Creating TableTop");
+
+				this.opponent_board = new PlayerBoard(0,0,false);
+				this.player_board = new PlayerBoard(0,this.width/2, true);
+			}
+
+			draw(canvas, offsetX, offsetY, options) {
+				console.log("Drawing TableTop");
+				super.draw(canvas, options);
+
+				this.opponent_board.draw(canvas, options);
+				this.player_board.draw(canvas, options);
+
+			}
+
+			get_hand(is_player) {
+				if (is_player) {
+					return this.player_board.get_hand();
+				} else {
+					return this.opponent_board.get_hand();
+				}
+			}
+
+			get_deck(is_player) {
+				if (is_player) {
+					return this.player_board.get_deck();
+				} else {
+					return this.opponent_board.get_deck();
+				}
+			}
+		}
+
+		var table = new TableTop();
+		table.draw(canvas);
+
+		function redraw() {
+			var ctx = canvas.getContext("2d");
+			ctx.clearRect(0,0,canvas.width, canvas.height);
+			table.draw(canvas);
+
+			if (curMenu) {
+				console.log("DRAWING CUR MENU!");
+				curMenu.draw(canvas);
+			}
+		}
+
+		function getHand(is_player) {
+			return table.get_hand(is_player);
+		}
+
+		function getDeck(is_player) {
+			return table.get_deck(is_player);
+		}
+
+	</script>
+<!--
+	<div class="object" onclick="showMenu()">
+		<img src="https://static.wikia.nocookie.net/final-fantasy-card-game/images/f/f4/1-001H.png/revision/latest/scale-to-width-down/250?cb=20161106105159" alt="Object">
+	</div>
+
+	<div id="menu" style="display: none;">
+		<ul>
+			<li><a href="#">Action 1</a></li>
+			<li><a href="#">Action 2</a></li>
+			<li><a href="#">Action 3</a></li>
+		</ul>
+	</div>
+
+	<script>
+		function showMenu() {
+			var menu = document.getElementById("menu");
+			menu.style.display = "block";
+		}
+	</script>
+	-->
+</body>
+</html>
