@@ -24,7 +24,7 @@
 		clickableObjects = [];
 		menuObjects = [];
 		curMenu = null;
-		var debugGame = false;
+		var debugGame = true;
 
 		var opus1_fire_earth_starter_deck = [
 			"1-004C",
@@ -318,13 +318,39 @@
 			}
 		}
 
+		// TODO: Treat hand as zone, but I need "card" to have knowledge of it's current zone.  That simplifies a lot.
 		class HandMenu extends CardMenu {
 			constructor(offsetX, offsetY, chosenCard, is_player) {
 				super(offsetX, offsetY, chosenCard);
 				var hand = getHand(is_player);
 				var deck = getDeck(is_player);
+				var forward = getForward(is_player);
+				var backup = getBackup(is_player);
 
-				menuObjects.push(new MenuItem(this.offsetX, this.offsetY, "TopOfDeck", new MoveCardFromHandToTopOfDeckOp(chosenCard, hand, deck)));
+				menuObjects.push(new MenuItem(this.offsetX, this.offsetY+0, "PlayForward", new AddCardFromHandToZoneOp(chosenCard, hand, forward)));
+				menuObjects.push(new MenuItem(this.offsetX, this.offsetY+40, "PlayBackup", new AddCardFromHandToZoneOp(chosenCard, hand, backup)));
+				menuObjects.push(new MenuItem(this.offsetX, this.offsetY+80, "TopOfDeck", new MoveCardFromHandToTopOfDeckOp(chosenCard, hand, deck)));
+				menuObjects.push(new MenuItem(this.offsetX, this.offsetY+120, "BottomOfDeck", new MoveCardFromHandToBottomOfDeckOp(chosenCard, hand, deck)));
+				// Send to break
+				// Banish
+			}
+		}
+		
+		class ZoneMenu extends CardMenu {
+			constructor(offsetX, offsetY, chosenCard, is_player) {
+				super(offsetX, offsetY, chosenCard);
+				var hand = getHand(is_player);
+				var deck = getDeck(is_player);
+				var forward = getForward(is_player);
+				var backup = getBackup(is_player);
+
+				menuObjects.push(new MenuItem(this.offsetX, this.offsetY+0, "Dull", new DullCardOp(chosenCard, true)));
+				menuObjects.push(new MenuItem(this.offsetX, this.offsetY+40, "Acivate", new DullCardOp(chosenCard, false)));
+				menuObjects.push(new MenuItem(this.offsetX, this.offsetY+80, "SendToBreak", new DullCardOp(chosenCard)));
+				menuObjects.push(new MenuItem(this.offsetX, this.offsetY+120, "ReturnToHand", new AddCardFromZoneToHandOp(chosenCard, hand, forward)));
+				// Top of deck
+				// Bottom of deck
+				// Banish
 			}
 		}
 
@@ -338,14 +364,28 @@
 				this.deck.addTopCardToHand();
 			}
 		}
-		class AddCardFromHandToFieldOp {
-			constructor(card, hand) {
+		class AddCardFromHandToZoneOp {
+			constructor(card, hand, zone) {
 				this.card = card;
 				this.hand = hand;
+				this.zone = zone;
 			}
 
 			act() {
-				this.deck.addTopCardToHand();
+				this.hand.remove_card(this.card);
+				this.zone.add_card_obj(this.card);
+			}
+		}
+		class AddCardFromZoneToHandOp {
+			constructor(card, hand, zone) {
+				this.card = card;
+				this.hand = hand;
+				this.zone = zone;
+			}
+
+			act() {
+				this.zone.remove_card(this.card);
+				this.hand.add_card_obj(this.card);
 			}
 		}
 		class ShuffleDeckOp {
@@ -358,6 +398,18 @@
 			}
 		}
 		class MoveCardFromHandToTopOfDeckOp {
+			constructor(card, zone, deck) {
+				this.card = card;
+				this.zone = zone;
+				this.deck = deck;
+			}
+
+			act() {
+				this.zone.remove_card(this.card);
+				this.deck.addCardToTopOfDeck(this.card);
+			}
+		}
+		class MoveCardFromHandToBottomOfDeckOp {
 			constructor(card, hand, deck) {
 				this.card = card;
 				this.hand = hand;
@@ -366,12 +418,31 @@
 
 			act() {
 				this.hand.remove_card(this.card);
-				this.deck.addCardToTopOfDeck(this.card);
+				this.deck.addCardToBottomOfDeck(this.card);
+			}
+		}
+		class DullCardOp {
+			constructor(card, doDull) {
+				this.card = card;
+				this.doDull = doDull;
+			}
+
+			act() {
+				this.card.dull(this.doDull);
+			}
+		}
+		class ActivateCardOp {
+			constructor(card) {
+				this.card = card;
+			}
+
+			act() {
+				this.card.dull(false);
 			}
 		}
 
 		class Card extends DrawableObject {
-			constructor(offsetX, offsetY, id, is_player, player_can_see) {
+			constructor(offsetX, offsetY, id, is_player, player_can_see, zone) {
 				super(offsetX,offsetY,(is_player ? -1 : 1)*400/4,(is_player ? -1 : 1)*558/4);
 				console.log("Creating Card: " + id);
 				this.id = id;
@@ -381,6 +452,8 @@
 				// https://static.wikia.nocookie.net/final-fantasy-card-game/images/6/65/1-046H.png/revision/latest?cb=20161111145220
 				this.image_link = "https://fftcg.cdn.sewest.net/images/cards/full/" + this.id + "_eg.jpg";
 				this.back_image_link = "https://static.wikia.nocookie.net/final-fantasy-card-game/images/1/16/Card_Back_Black.png";
+				this.zone = zone;
+				this.is_dull = false;
 
 
 				if (debugGame) {
@@ -411,8 +484,17 @@
 				var imy = this.offsetY;
 				var imw = this.width;
 				var imh = this.height;
+				var card = this;
 				img.onload = function() {
+					if (card.is_dull) {
+						ctx.translate(imx+imw/2, imy+imh/2);
+						ctx.rotate((card.is_player?1:-1)*Math.PI / 2);
+					}
 					ctx.drawImage(img,imx,imy,imw,imh);
+					if (card.is_dull) {
+						ctx.rotate((card.is_player?-1:1)*Math.PI / 2);
+						ctx.translate(-(imx+imw/2), -(imy+imh/2));
+					}
 				};
 
 				// Draw the Text
@@ -437,8 +519,24 @@
 			}
 			
 			act() {
-				curMenu = new HandMenu(200,200,this,this.is_player);
+				const forward = getForward(this.is_player);
+				const backup = getBackup(this.is_player);
+				const hand = getHand(this.is_player);
+				if (this.zone === hand)
+					curMenu = new HandMenu(200,200,this,this.is_player);
+				if (this.zone === forward)
+					curMenu = new ZoneMenu(200,200,this,this.is_player);
+				if (this.zone === backup)
+					curMenu = new ZoneMenu(200,200,this,this.is_player);
 				redraw();
+			}
+
+			set_zone(zone) {
+				this.zone = zone;
+			}
+
+			dull(isDull) {
+				this.is_dull = isDull;
 			}
 		}
 
@@ -506,7 +604,7 @@
 			}
 
 			act() {
-				curMenu = new DeckMenu(400,400,this);
+				curMenu = new DeckMenu(350,340,this);
 				redraw();
 			}
 
@@ -518,6 +616,9 @@
 
 			addCardToTopOfDeck(card) {
 				this.cards.push(card.id);
+			}
+			addCardToBottomOfDeck(card) {
+				this.cards.unshift(card.id);
 			}
 
 			shuffle() {
@@ -549,6 +650,7 @@
 
 		}
 
+		// TODO: Hand is basically a zone
 		class Zone extends DrawableObject {
 			constructor(offsetX, offsetY, is_player) {
 				super(offsetX, offsetY, (is_player ? -1 : 1)*640, (is_player ? -1 : 1)*140);
@@ -561,7 +663,7 @@
 			}
 
 			draw(canvas, options) {
-				console.log("Drawing Hand");
+				console.log("Drawing Zone");
 				super.draw(canvas, options);
 				
 				this.cards_in_zone.forEach(function(card) {
@@ -576,21 +678,29 @@
 				
 				for (let i = 0; i < this.cards_in_zone.length; i++) {
 					console.log("Positioning card " + i);
-					this.cards_in_zone[i].setOffsets(this.offsetX+(124*i*(this.is_player?-1:1)), this.cards_in_zone[i].getOffsetY());
+					this.cards_in_zone[i].setOffsets(this.offsetX+(124*i*(this.is_player?-1:1)), this.offsetY);
 				}
 			}
 
 			add_card_obj(card) {
-				this.cards_in_zone.push(new_card);
+				this.cards_in_zone.push(card);
+				card.set_zone(this);
 				this.reposition_cards();
 			}
 
-			add_card(id) {
-				console.log("Adding card " + id + " to hand");
-				var num_cards = this.cards_in_zone.length;
-				var new_card = new Card(this.offsetX, this.offsetY, id, this.is_player, this.is_player);
-				this.add_card_obj(new_card);
+			remove_card(card) {
+				console.log("Removing card " + card.id + " from zone");
+				var index = this.cards_in_zone.indexOf(card);
+				if (index < 0) {
+					console.log("UNEXPECTED ERROR: couldn't find card in hand");
+					return;
+				}
+				// remove 1 card at the found index
+				const removed = this.cards_in_zone.splice(index,1);
+				console.log("Found and removed card " + card.id + " from index " + index);
+				this.reposition_cards();
 			}
+
 		}
 
 		class Hand extends DrawableObject {
@@ -624,12 +734,17 @@
 				}
 			}
 
+			add_card_obj(card) {
+				this.cards_in_hand.push(card);
+				card.set_zone(this);
+				this.reposition_cards();
+			}
+
 			add_card(id) {
 				console.log("Adding card " + id + " to hand");
 				var num_cards = this.cards_in_hand.length;
-				var new_card = new Card(this.offsetX, this.offsetY, id, this.is_player, this.is_player);
-				this.cards_in_hand.push(new_card);
-				this.reposition_cards();
+				var new_card = new Card(this.offsetX, this.offsetY, id, this.is_player, this.is_player, this);
+				this.add_card_obj(new_card);
 			}
 
 			remove_card(card) {
@@ -652,9 +767,13 @@
 				if (is_player) {
 					this.deck = new Deck(this.offsetX+canvas.width - (this.offsetX+14), this.offsetY+canvas.height - (this.offsetY+10), opus1_fire_earth_starter_deck, is_player);
 					this.hand = new Hand(this.offsetX+canvas.width - (this.offsetX+128), this.offsetY+canvas.height - (this.offsetY+10), is_player);
+					this.backup = new Zone(this.offsetX+canvas.width - (this.offsetX+128), this.offsetY+canvas.height - (this.offsetY+10+160), is_player);
+					this.forward = new Zone(this.offsetX+canvas.width - (this.offsetX+128), this.offsetY+canvas.height - (this.offsetY+10+160+160), is_player);
 				} else {
 					this.deck = new Deck(this.offsetX+14, this.offsetY+10, opus1_water_wind_starter_deck, is_player);
 					this.hand = new Hand(this.offsetX+128, this.offsetY+10, is_player);
+					this.backup = new Zone(this.offsetX+128, this.offsetY+10+160, is_player);
+					this.forward = new Zone(this.offsetX+128, this.offsetY+10+160+160, is_player);
 				}
 				this.is_player = is_player;
 			}
@@ -665,8 +784,16 @@
 
 				this.deck.draw(canvas, options);
 				this.hand.draw(canvas, options);
+				this.backup.draw(canvas, options);
+				this.forward.draw(canvas, options);
 			}
 
+			get_backup() {
+				return this.backup;
+			}
+			get_forward() {
+				return this.forward;
+			}
 			get_hand() {
 				return this.hand;
 			}
@@ -691,6 +818,20 @@
 				this.opponent_board.draw(canvas, options);
 				this.player_board.draw(canvas, options);
 
+			}
+			get_backup(is_player) {
+				if (is_player) {
+					return this.player_board.get_backup();
+				} else {
+					return this.opponent_board.get_backup();
+				}
+			}
+			get_forward(is_player) {
+				if (is_player) {
+					return this.player_board.get_forward();
+				} else {
+					return this.opponent_board.get_forward();
+				}
 			}
 
 			get_hand(is_player) {
@@ -722,6 +863,14 @@
 				console.log("DRAWING CUR MENU!");
 				curMenu.draw(canvas);
 			}
+		}
+
+		function getForward(is_player) {
+			return table.get_forward(is_player);
+		}
+
+		function getBackup(is_player) {
+			return table.get_backup(is_player);
 		}
 
 		function getHand(is_player) {
