@@ -89,3 +89,13 @@ Adding message-db container for handling messages
 (commands and events) recorded by Applications and
 Containers
 
+===================================================
+
+Chapter 3
+
+TODO: Not a big fan of using "ethangarofalo/message-db".  I may want to just clone the github repo and build it myself as part of deployment.
+
+Running it now, it will record a "VideoViewed" event to the messages table in the message_store database
+In the message-db container.
+
+

@@ -27,7 +27,7 @@ function createConfig ({ env }) {
     return {
         env,
         // ...
-        db,
+        knexClient,
         messageStore,
         homeApp,
         recordViewingsApp

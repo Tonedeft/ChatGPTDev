@@ -56,9 +56,14 @@ function myeventlog(stream, event) {
     mydebug(levels.INFO, stream + ": " + JSON.stringify(event))
 }
 
+function myerrorlog(err) {
+    mydebug(levels.ERROR, JSON.stringify(err))
+}
+
 
 module.exports = {
     mydebug,
     mytrace,
-    myeventlog
+    myeventlog,
+    myerrorlog
 } 
