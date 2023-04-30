@@ -20,13 +20,13 @@
 	<canvas id="tableCanvas" width="960" height="960"></canvas>
 
 	<script>
-		var canvas = document.getElementById("tableCanvas");
+		let canvas = document.getElementById("tableCanvas");
 		clickableObjects = [];
 		menuObjects = [];
 		curMenu = null;
-		var debugGame = true;
+		let debugGame = false;
 
-		var opus1_fire_earth_starter_deck = [
+		let opus1_fire_earth_starter_deck = [
 			"1-004C",
 			"1-004C",
 			"1-010C",
@@ -78,7 +78,7 @@
 			"1-206S",
 			"1-206S",
 		];
-		var opus1_water_wind_starter_deck = [
+		let opus1_water_wind_starter_deck = [
 			"1-068C",
 			"1-068C",
 			"1-074R",
@@ -132,7 +132,7 @@
 		];
 
 		canvas.addEventListener('click', function(event) {
-			var xVal = event.pageX - canvas.offsetLeft,
+			let xVal = event.pageX - canvas.offsetLeft,
 			yVal = event.pageY - canvas.offsetTop;
 			console.log("Clicked " + xVal + ", " + yVal);
 
@@ -140,19 +140,19 @@
 				console.log("Menu open");
 
 				menuObjects.forEach(function(ele) {
-					ele.tryClick(xVal, yVal);
 					ele.disable();
+					ele.tryClick(xVal, yVal);
 				});
 
 				menuObjects = [];
 				curMenu.disable();
 				curMenu = null;
-				redraw();
 			} else {
 				clickableObjects.forEach(function(ele) {
 					ele.tryClick(xVal, yVal);
 				});
 			}
+			redraw();
 
 		}, false);
 
@@ -170,12 +170,12 @@
 
 			destructor() {
 				console.log("Deleting DrawableObject");
-				var index = clickableObjects.find(e => e == this);
-				var z = clickableObjects.splice(index, index);
+				let index = clickableObjects.find(e => e == this);
+				let z = clickableObjects.splice(index, index);
 			}
 
 			draw(canvas, options) {
-				var ctx = canvas.getContext("2d");
+				let ctx = canvas.getContext("2d");
 
 				// If debug mode, draw the outline
 				if (debugGame) {
@@ -232,7 +232,7 @@
 			draw(canvas, options) {
 				if (this.is_active) {
 					super.draw(canvas, options);
-					var ctx = canvas.getContext("2d");
+					let ctx = canvas.getContext("2d");
 
 					ctx.fillStyle = "gray";
 					ctx.fillRect(this.offsetX, this.offsetY, this.width, this.height);
@@ -245,13 +245,11 @@
 			}
 
 			tryClick(xVal, yVal) {
-				if (this.is_active) {
-					{{/* console.log("Try Click"); */}}
-					if ((xVal >= this.offsetX) && (xVal <= this.offsetX+this.width) &&
-						(yVal >= this.offsetY) && (yVal <= this.offsetY+this.height)) {
-						{{/* console.log("Yes, clicked"); */}}
-						this.chosenOp.act();
-					}
+				{{/* console.log("Try Click"); */}}
+				if ((xVal >= this.offsetX) && (xVal <= this.offsetX+this.width) &&
+					(yVal >= this.offsetY) && (yVal <= this.offsetY+this.height)) {
+					{{/* console.log("Yes, clicked"); */}}
+					this.chosenOp.act();
 				}
 			}
 		}
@@ -270,7 +268,7 @@
 			draw(canvas, options) {
 				if (this.is_active) {
 					super.draw(canvas, options);
-					var ctx = canvas.getContext("2d");
+					let ctx = canvas.getContext("2d");
 
 					ctx.fillStyle = "lightGray";
 					ctx.fillRect(this.offsetX, this.offsetY, this.width, this.height);
@@ -286,7 +284,8 @@
 			constructor(offsetX, offsetY, chosenDeck) {
 				super(offsetX, offsetY);
 				this.chosenDeck = chosenDeck;
-				menuObjects.push(new MenuItem(this.offsetX, this.offsetY, "Draw Card", new AddCardFromDeckToHandOp(chosenDeck)));
+				let hand = getHand(chosenDeck.is_player);
+				menuObjects.push(new MenuItem(this.offsetX, this.offsetY, "Draw Card", new AddCardFromDeckToHandOp(chosenDeck, hand)));
 				menuObjects.push(new MenuItem(this.offsetX, this.offsetY+40, "Shuffle", new ShuffleDeckOp(chosenDeck)));
 			}
 		}
@@ -300,20 +299,23 @@
 			draw(canvas, options) {
 				if (this.is_active) {
 					super.draw(canvas, options);
-					var ctx = canvas.getContext("2d");
+					let ctx = canvas.getContext("2d");
 					
 					// Display the image
 					// Load the image
-					var img = new Image();
-					img.src=this.card.image_link;
+					this.img = new Image();
+					this.img.src=this.card.image_link;
 
-					var imx = this.offsetX+240;
-					var imy = this.offsetY;
-					var imw = this.width*2;
-					var imh = this.height*2;
-					img.onload = function() {
-						ctx.drawImage(img,imx,imy,imw,imh);
+					let imx = this.offsetX+240;
+					let imy = this.offsetY;
+					let imw = this.width*2;
+					let imh = this.height*2;
+					let funcImg = this.img;
+					this.img.onload = function() {
+						ctx.drawImage(funcImg,imx,imy,imw,imh);
 					};
+				} else {
+					this.img = null;
 				}
 			}
 		}
@@ -322,10 +324,10 @@
 		class HandMenu extends CardMenu {
 			constructor(offsetX, offsetY, chosenCard, is_player) {
 				super(offsetX, offsetY, chosenCard);
-				var hand = getHand(is_player);
-				var deck = getDeck(is_player);
-				var forward = getForward(is_player);
-				var backup = getBackup(is_player);
+				let hand = getHand(is_player);
+				let deck = getDeck(is_player);
+				let forward = getForward(is_player);
+				let backup = getBackup(is_player);
 
 				menuObjects.push(new MenuItem(this.offsetX, this.offsetY+0, "PlayForward", new AddCardFromHandToZoneOp(chosenCard, hand, forward)));
 				menuObjects.push(new MenuItem(this.offsetX, this.offsetY+40, "PlayBackup", new AddCardFromHandToZoneOp(chosenCard, hand, backup)));
@@ -339,13 +341,13 @@
 		class ZoneMenu extends CardMenu {
 			constructor(offsetX, offsetY, chosenCard, is_player) {
 				super(offsetX, offsetY, chosenCard);
-				var hand = getHand(is_player);
-				var deck = getDeck(is_player);
-				var forward = getForward(is_player);
-				var backup = getBackup(is_player);
+				let hand = getHand(is_player);
+				let deck = getDeck(is_player);
+				let forward = getForward(is_player);
+				let backup = getBackup(is_player);
 
 				menuObjects.push(new MenuItem(this.offsetX, this.offsetY+0, "Dull", new DullCardOp(chosenCard, true)));
-				menuObjects.push(new MenuItem(this.offsetX, this.offsetY+40, "Acivate", new DullCardOp(chosenCard, false)));
+				menuObjects.push(new MenuItem(this.offsetX, this.offsetY+40, "Activate", new DullCardOp(chosenCard, false)));
 				menuObjects.push(new MenuItem(this.offsetX, this.offsetY+80, "SendToBreak", new DullCardOp(chosenCard)));
 				menuObjects.push(new MenuItem(this.offsetX, this.offsetY+120, "ReturnToHand", new AddCardFromZoneToHandOp(chosenCard, hand, forward)));
 				// Top of deck
@@ -356,12 +358,17 @@
 
 		// Operations changing the state of the board
 		class AddCardFromDeckToHandOp {
-			constructor(deck) {
+			constructor(deck, hand) {
 				this.deck = deck;
+				this.hand = hand;
 			}
 
 			act() {
-				this.deck.addTopCardToHand();
+				let card = this.deck.takeTopCard();
+				console.log("Adding card " + card + " to hand");
+				let new_card = new Card(this.hand.offsetX, this.hand.offsetY, card, this.hand.is_player, this.hand.is_player, this.hand);
+				this.hand.add_card_obj(new_card);
+				{{/* redraw(); */}}
 			}
 		}
 		class AddCardFromHandToZoneOp {
@@ -374,6 +381,8 @@
 			act() {
 				this.hand.remove_card(this.card);
 				this.zone.add_card_obj(this.card);
+				this.card.set_visible(true);
+				{{/* redraw(); */}}
 			}
 		}
 		class AddCardFromZoneToHandOp {
@@ -386,6 +395,8 @@
 			act() {
 				this.zone.remove_card(this.card);
 				this.hand.add_card_obj(this.card);
+				this.card.set_visible(false);
+				{{/* redraw(); */}}
 			}
 		}
 		class ShuffleDeckOp {
@@ -407,6 +418,7 @@
 			act() {
 				this.zone.remove_card(this.card);
 				this.deck.addCardToTopOfDeck(this.card);
+				{{/* redraw(); */}}
 			}
 		}
 		class MoveCardFromHandToBottomOfDeckOp {
@@ -419,6 +431,7 @@
 			act() {
 				this.hand.remove_card(this.card);
 				this.deck.addCardToBottomOfDeck(this.card);
+				{{/* redraw(); */}}
 			}
 		}
 		class DullCardOp {
@@ -455,12 +468,12 @@
 				this.zone = zone;
 				this.is_dull = false;
 
-
-				if (debugGame) {
+				this.set_visible(player_can_see);
+				{{/* if (debugGame) {
 					this.player_can_see = true;
 				} else {
 					this.player_can_see = player_can_see;
-				}
+				} */}}
 
 				this.is_player = is_player;
 				console.log(this.image_link);
@@ -469,31 +482,41 @@
 			draw(canvas, options) {
 				console.log("Drawing Card: " + this.id);
 				super.draw(canvas, options);
-				var ctx = canvas.getContext("2d");
+				let ctx = canvas.getContext("2d");
 
 				// Display the image
 				// Load the image
-				var img = new Image();
+				let img = new Image();
 				if (this.player_can_see) {
 					img.src=this.image_link;
 				} else {
 					img.src=this.back_image_link;
 				}
 
-				var imx = this.offsetX;
-				var imy = this.offsetY;
-				var imw = this.width;
-				var imh = this.height;
-				var card = this;
+				let imx = this.offsetX;
+				let imy = this.offsetY;
+				let imw = this.width;
+				let imh = this.height;
+				let card = this;
 				img.onload = function() {
 					if (card.is_dull) {
+						// console.log("Moving center to (" + imx+imw/2 + ", " + imy+imh/2 + ")");
 						ctx.translate(imx+imw/2, imy+imh/2);
+						// console.log("Rotating ctx by (" + ((card.is_player?1:-1)*Math.PI / 2) +  ")");
 						ctx.rotate((card.is_player?1:-1)*Math.PI / 2);
-					}
-					ctx.drawImage(img,imx,imy,imw,imh);
-					if (card.is_dull) {
+
+						// Draw at the center of the context
+						ctx.drawImage(img, -imw/2,-imh/2,imw, imh);
+
+						// Reverse the rotation
+						// console.log("Rotating ctx by (" + ((card.is_player?-1:1)*Math.PI / 2) +  ")");
 						ctx.rotate((card.is_player?-1:1)*Math.PI / 2);
+						// console.log("Moving center to (" + -imx+imw/2 + ", " + -imy+imh/2 + ")");
 						ctx.translate(-(imx+imw/2), -(imy+imh/2));
+					} else {
+						// TODO: Implement the draw function in a way that it always draws at 0,0 and the context is moved instead.
+						// Like: translate to location, rotate as needed, draw at 0-width/2, 0-height/2, width, height, reverse rotation, reverse translation
+						ctx.drawImage(img,imx,imy,imw,imh);
 					}
 				};
 
@@ -503,6 +526,7 @@
 			}
 
 			tryClick(xVal, yVal) {
+				// TODO: This isn't exactly accurate if the card is dull (rotated)
 				if (this.is_player) {
 					if ((xVal <= this.offsetX) && (xVal >= this.offsetX+this.width) &&
 						(yVal <= this.offsetY) && (yVal >= this.offsetY+this.height)) {
@@ -528,11 +552,19 @@
 					curMenu = new ZoneMenu(200,200,this,this.is_player);
 				if (this.zone === backup)
 					curMenu = new ZoneMenu(200,200,this,this.is_player);
-				redraw();
+				{{/* redraw(); */}}
 			}
 
 			set_zone(zone) {
 				this.zone = zone;
+			}
+
+			set_visible(is_visible) {
+				if (debugGame) {
+					this.player_can_see = true;
+				} else {
+					this.player_can_see = is_visible;
+				}
 			}
 
 			dull(isDull) {
@@ -565,13 +597,13 @@
 			}
 
 			drawTexts(canvas, options) {
-				var ctx = canvas.getContext("2d");
+				let ctx = canvas.getContext("2d");
 				// Draw the Text
 				ctx.font = "30px Arial italic";
 				ctx.fillStyle = "white";
 
-				var x = this.offsetX+5;
-				var y = this.offsetY+140-5;
+				let x = this.offsetX+5;
+				let y = this.offsetY+140-5;
 				if (this.is_player) {
 					x += this.width;
 					y += this.height;
@@ -583,17 +615,17 @@
 			draw(canvas, options) {
 				console.log("Drawing Deck");
 				super.draw(canvas, options);
-				var ctx = canvas.getContext("2d");
+				let ctx = canvas.getContext("2d");
 
 				// Display the image
 				// Load the image
-				var img = new Image();
+				let img = new Image();
 				img.src=this.image_link;
-				var imx = this.offsetX;
-				var imy = this.offsetY;
-				var imw = this.width;
-				var imh = this.height;
-				var card = this;
+				let imx = this.offsetX;
+				let imy = this.offsetY;
+				let imw = this.width;
+				let imh = this.height;
+				let card = this;
 				img.onload = function() {
 					ctx.drawImage(img,imx,imy,imw,imh);
 					card.drawTexts(canvas, options);
@@ -605,13 +637,6 @@
 
 			act() {
 				curMenu = new DeckMenu(350,340,this);
-				redraw();
-			}
-
-			addTopCardToHand() {
-				var card = this.takeTopCard();
-				getHand(this.is_player).add_card(card);
-				redraw();
 			}
 
 			addCardToTopOfDeck(card) {
@@ -627,7 +652,7 @@
 			}
 
 			takeTopCard() {
-				var next = this.cards.pop();
+				let next = this.cards.pop();
 				console.log("Taking " + next + " card from top of deck");
 				return next;
 			}
@@ -690,9 +715,12 @@
 
 			remove_card(card) {
 				console.log("Removing card " + card.id + " from zone");
-				var index = this.cards_in_zone.indexOf(card);
+				{{/* let index = this.cards_in_zone.indexOf(card); */}}
+				let index = this.cards_in_zone.findIndex((item) => {
+					return item.id === card.id;
+				});
 				if (index < 0) {
-					console.log("UNEXPECTED ERROR: couldn't find card in hand");
+					console.log("UNEXPECTED ERROR: couldn't find card in zone");
 					return;
 				}
 				// remove 1 card at the found index
@@ -730,7 +758,7 @@
 				
 				for (let i = 0; i < this.cards_in_hand.length; i++) {
 					console.log("Positioning card " + i);
-					this.cards_in_hand[i].setOffsets(this.offsetX+(124*i*(this.is_player?-1:1)), this.cards_in_hand[i].getOffsetY());
+					this.cards_in_hand[i].setOffsets(this.offsetX+(124*i*(this.is_player?-1:1)), this.offsetY);
 				}
 			}
 
@@ -740,16 +768,12 @@
 				this.reposition_cards();
 			}
 
-			add_card(id) {
-				console.log("Adding card " + id + " to hand");
-				var num_cards = this.cards_in_hand.length;
-				var new_card = new Card(this.offsetX, this.offsetY, id, this.is_player, this.is_player, this);
-				this.add_card_obj(new_card);
-			}
-
 			remove_card(card) {
 				console.log("Removing card " + card.id + " from hand");
-				var index = this.cards_in_hand.indexOf(card);
+				{{/* let index = this.cards_in_hand.indexOf(card); */}}
+				let index = this.cards_in_hand.findIndex((item) => {
+					return item.id === card.id;
+				});
 				if (index < 0) {
 					console.log("UNEXPECTED ERROR: couldn't find card in hand");
 					return;
@@ -851,11 +875,11 @@
 			}
 		}
 
-		var table = new TableTop();
+		let table = new TableTop();
 		table.draw(canvas);
 
 		function redraw() {
-			var ctx = canvas.getContext("2d");
+			let ctx = canvas.getContext("2d");
 			ctx.clearRect(0,0,canvas.width, canvas.height);
 			table.draw(canvas);
 
@@ -897,7 +921,7 @@
 
 	<script>
 		function showMenu() {
-			var menu = document.getElementById("menu");
+			let menu = document.getElementById("menu");
 			menu.style.display = "block";
 		}
 	</script>

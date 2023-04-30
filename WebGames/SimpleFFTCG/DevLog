@@ -1,0 +1,38 @@
+4/29/23
+
+Starting with a basic html file with js scripting to display cards on the table and manipulate them in some way.
+
+Today, trying to set up a microservices architecture where I can have users log index
+
+Installing node.js
+https://nodejs.org/en
+
+Setting up express framework to access my html files
+
+Copied source code for the book from: https://pragprog.com/titles/egmicro/practical-microservices/
+I couldn't find full source code anywhere in the book.
+
+Ran 
+> npm install
+
+There were 9 vulnerabilities, 5 high
+it recommended running npm audit fix --force
+
+So I ran
+> npm audit fix --force
+
+"found 0 vulnerabilities"
+
+Probably just the older versions from an older book
+
+
+I need a PostgreSQL database running
+Following book instructions to create docker-compose.yaml
+
+To run database:
+> docker-compose rm -sf
+> docker-compose up
+
+To run server connecting to that database:
+> npm run start-dev-server
+

@@ -1,0 +1,9 @@
+version: '3'
+
+services:
+  fftcg_postgres_db:
+    image: postgres:10.3
+    environment:
+      - POSTGRES_DB=fftcg_postgres_db
+    ports:
+      - '0.0.0.0:5432:5432'
