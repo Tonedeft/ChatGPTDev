@@ -1,17 +1,35 @@
 const express = require('express')
-const { mydebug, mytrace } = require('../../mydebug')
+const uuid = require('uuid/v4')
+const { mydebug, mytrace, myeventlog } = require('../../mydebug')
 
 // actions will perform the business logic
 function createActions ({
-    db
+    messageStore
 }) {
     mytrace()
 
-    function recordViewing (traceId, videoId) {
+    // This function will record a VideoViewed Event to the viewing-<ID> stream
+    function recordViewing (traceId, videoId, userId) {
         mytrace()
 
+        const viewedEvent = {
+            id: uuid(),
+            type: 'VideoViewed',
+            metadata: {
+                traceId,
+                userId,
+            },
+            data: {
+                userId,
+                videoId
+            }
+        }
+        const streamName = `viewing-${videoId}`
+
+        myeventlog(streamName, viewedEvent)
+
         // Return something Promise-based so that the endpoint doesn't crash
-        return Promise.resolve(true)
+        return messageStore.write(streamName, viewedEvent)
     }
     return {
         recordViewing
@@ -38,11 +56,11 @@ function createHandlers ({ actions }) {
 } 
 
 function createRecordViewings ({
-    db
+    messageStore
 }) {
     mytrace()
     const actions = createActions({
-        db
+        messageStore
     })
 
     const handlers = createHandlers({ actions })

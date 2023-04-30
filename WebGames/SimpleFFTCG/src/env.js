@@ -37,6 +37,7 @@ function requireFromEnv(key) {
 module.exports = {
     appName: requireFromEnv('APP_NAME'),
     databaseUrl: requireFromEnv('DATABASE_URL'),
+    messageStoreConnectionString: requireFromEnv('MESSAGE_STORE_CONNECTION_STRING'),
     env: requireFromEnv('NODE_ENV'),
     port: parseInt(requireFromEnv('PORT'), 10),
     version: packageJson.version

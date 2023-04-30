@@ -9,8 +9,8 @@
 const levels = {
     ALL: 0,
     TRACE: 1,
-    INFO: 2,
-    DEBUG: 3,
+    DEBUG: 2,
+    INFO: 3,
     WARN: 4,
     ERROR: 5
 }
@@ -24,9 +24,9 @@ function get_level(priority) {
         case 1:
             return "TRACE"
         case 2:
-            return "INFO"
-        case 3:
             return "DEBUG"
+        case 3:
+            return "INFO"
         case 4:
             return "WARN"
         case 5:
@@ -52,7 +52,13 @@ function mytrace() {
     }
 }
 
+function myeventlog(stream, event) {
+    mydebug(levels.INFO, stream + ": " + JSON.stringify(event))
+}
+
+
 module.exports = {
     mydebug,
-    mytrace
+    mytrace,
+    myeventlog
 } 
