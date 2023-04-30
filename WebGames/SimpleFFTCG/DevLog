@@ -60,3 +60,15 @@ using today's date
 https://stackoverflow.com/questions/40435315/knex-timeout-acquiring-a-connection-the-pool-is-probably-full-are-you-missing
 
 Access using localhost:3000
+
+
+=========================================================
+
+Notes on Microservices Architecture
+
+5 categories
+1. Applications - HTTP endpoints that end users interact with.  Request/response.
+2. Components - Doers of things. Encapsulates a distinct business process. Batch mode.
+3. Aggregators - aggregate state transitions into View Data that applications use to render what end users see. Batch mode.
+4. View Data - read-only models derived from state transitions. Eventually consistent derivations from authoritative state. We don't make decisions based on View Data. PostgreSQL tables, or other databases.
+5. Message Store - At the center. State transitions live here. Also a transport mechanism. 'message-db' in this project.

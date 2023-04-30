@@ -1,5 +1,6 @@
 const createKnexClient = require('./knex-client')
 const createHomeApp = require('./app/home')
+const createRecordViewingsApp = require('./app/record-viewings')
 const { mydebug, mytrace } = require('./mydebug')
 
 function createConfig ({ env }) {
@@ -14,11 +15,14 @@ function createConfig ({ env }) {
     // Create the 'home' app with the database client
     const homeApp = createHomeApp({ db })
 
+    const recordViewingsApp = createRecordViewingsApp({ db })
+
     return {
         env,
         // ...
         db,
         homeApp,
+        recordViewingsApp
     }
 }
 
