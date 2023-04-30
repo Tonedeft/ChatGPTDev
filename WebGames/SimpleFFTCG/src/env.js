@@ -6,6 +6,7 @@
 
 const colors = require('colors/safe')
 const dotenv = require('dotenv')
+const { mydebug, mytrace } = require('./mydebug')
 
 const packageJson = require('../package.json')
 
@@ -21,6 +22,8 @@ if (envResult.error) {
 }
 
 function requireFromEnv(key) {
+    mytrace()
+    mydebug(3, "Getting ENV: " + key)
     if (!process.env[key]) {
         // eslint-disable-next-line no-console
         console.error(`${colors.red('[APP ERROR] Missing env variable:')} ${key}`)

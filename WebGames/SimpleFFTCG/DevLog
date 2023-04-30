@@ -12,6 +12,7 @@ Setting up express framework to access my html files
 Copied source code for the book from: https://pragprog.com/titles/egmicro/practical-microservices/
 I couldn't find full source code anywhere in the book.
 
+To install dependencies from package.json
 Ran 
 > npm install
 
@@ -33,6 +34,29 @@ To run database:
 > docker-compose rm -sf
 > docker-compose up
 
+To initialize the npm server
+> npm init
+# creates package.json
+
+
 To run server connecting to that database:
 > npm run start-dev-server
 
+4/30/23
+
+Installing knex
+> npm install knex -g
+
+Inside SimpleFFTCG
+> knex init
+# creates knexfile.js
+## This may not be necessary
+
+Going ahead and manually creating the first migration file
+using today's date
+
+## Had to update some versions because knex was timing out accessing
+## the database
+https://stackoverflow.com/questions/40435315/knex-timeout-acquiring-a-connection-the-pool-is-probably-full-are-you-missing
+
+Access using localhost:3000

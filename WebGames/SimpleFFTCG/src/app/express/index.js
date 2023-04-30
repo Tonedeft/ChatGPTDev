@@ -6,8 +6,11 @@ const { join } = require('path')
 
 const mountMiddleware = require('./mount-middleware')
 const mountRoutes = require('./mount-routes')
+const { mydebug, mytrace } = require('../../mydebug')
 
 function createExpressApp ({ config, env }) {
+    mytrace()
+    
     const app = express()
 
     // Configure PUG
