@@ -15,8 +15,8 @@ function createHandlers ({ queries }) {
         // 2. "Create Table" button
 
         return queries
-            .loadHomePage()
-            .then(viewData =>
+            .loadHomePage() // Get the home page data
+            .then(viewData => // Render the home page data
                 res.render('home/templates/home', viewData)
             )
             .catch(next)
@@ -37,8 +37,10 @@ function createQueries ({ db }) {
         // then sum the view_counts on that table and call it videosWatched
         // then extract the first row entry
         return db.then(client =>
-            client('videos')
-                .sum('view_count as videosWatched')
+            client('pages')
+                .where({page_name: 'home'})
+                .limit(1)
+                .then(camelCaseKeys)
                 .then(rows => rows[0])
         )
     }

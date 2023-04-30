@@ -11,6 +11,11 @@ const app = createExpressApp({ config, env })
 // Start function will be called to start the system
 function start () {
     mytrace()
+    // call start() on each Aggregator
+    config.aggregators.forEach(a => a.start())
+    // call start() on each Component
+    config.components.forEach(a => a.start())
+    
     // listen on this port and handle with signalAppStart
     app.listen(env.port, signalAppStart)
 }

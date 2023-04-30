@@ -99,3 +99,19 @@ Running it now, it will record a "VideoViewed" event to the messages table in th
 In the message-db container.
 
 
+
+===================================================
+
+Chapter 4
+
+Wrote 2 Applications: home and record-viewings
+Wrote Message Store
+Now write Aggregator
+
+New migration to build "pages" table.
+
+GAME_NOTE: I could probably write a page right now for
+           game_table that is pretty much the same thing.
+
+The Aggregator works, but we haven't updated the Message Store to handle subscriptions yet, so "createSubscription()" fails
+
