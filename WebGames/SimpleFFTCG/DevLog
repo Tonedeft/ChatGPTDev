@@ -119,4 +119,13 @@ The Aggregator works, but we haven't updated the Message Store to handle subscri
 
 Chapter 5
 
+Subscriber:
+inside aggregators
+home-page.js
+ - build() function creates the aggregator
+ - build() creates subscription to "viewing" category stream
+ - createHandlers() provides handler for VideoViewed Events
+ - createQueries() gives queries to modify state databases (like "pages")
 
+A whole bunch of stuff happens inside the message-store files
+to set up subscriptions and call the appropriate handlers.
