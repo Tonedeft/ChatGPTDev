@@ -17,6 +17,7 @@ function createQueries ({ db }) {
 
     function incrementVideosWatched (globalPosition) {
         mytrace()
+        mydebug(5, "globalPosition = " + globalPosition)
         // UPDATE the pages table
         // SET the videosWatched property to existing videosWatched (treated as int) + 1
         // also SETs lastViewProcessed of the result of previous SET to
@@ -35,7 +36,7 @@ function createQueries ({ db }) {
                 page_data = jsonb_set(
                     jsonb_set(
                         page_data,
-                        '${videosWatched}',
+                        '{videosWatched}',
                         ((page_data ->> 'videosWatched')::int + 1)::text::jsonb
                     ),
                     '{lastViewProcessed}',
@@ -45,6 +46,7 @@ function createQueries ({ db }) {
                 page_name = 'home' AND
                 (page_data->>'lastViewProcessed')::int < :globalPosition
             `
+
         return db.then(client => client.raw(queryString, { globalPosition }))
     }
 

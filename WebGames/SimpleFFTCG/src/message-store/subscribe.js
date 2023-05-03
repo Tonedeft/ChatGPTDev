@@ -30,7 +30,7 @@ function configureCreateSubscription({ read, readLastMessage, write }) {
         const subscriberStreamName = `subscriberPosition-${subscriberId}`
 
         let currentPosition = 0
-        let messageSinceLastPositionWrite = 0
+        let messagesSinceLastPositionWrite = 0
         let keepGoing = true
 
         function writePosition(position) {
@@ -55,7 +55,7 @@ function configureCreateSubscription({ read, readLastMessage, write }) {
             // If we've processed at least "positionUpdateInterval" messages,
             // write our current position
             if (messagesSinceLastPositionWrite === positionUpdateInterval) {
-                messageSinceLastPositionWrite = 0
+                messagesSinceLastPositionWrite = 0
 
                 return writePosition(position)
             }
@@ -97,7 +97,7 @@ function configureCreateSubscription({ read, readLastMessage, write }) {
 
         function handleMessage(message) {
             mytrace()
-            myeventlog(message)
+            myeventlog("Processing message: " + streamName, message)
 
             // Get the handler function for the current message type
             // $any refers to a subscriber wanting to receive any message

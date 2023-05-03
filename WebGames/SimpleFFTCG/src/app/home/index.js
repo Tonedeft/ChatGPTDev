@@ -16,8 +16,8 @@ function createHandlers ({ queries }) {
 
         return queries
             .loadHomePage() // Get the home page data
-            .then(viewData => // Render the home page data
-                res.render('home/templates/home', viewData)
+            .then(homePageData => // Render the home page data
+                res.render('home/templates/home', homePageData.pageData)
             )
             .catch(next)
     }
