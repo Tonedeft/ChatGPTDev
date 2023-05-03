@@ -115,3 +115,8 @@ GAME_NOTE: I could probably write a page right now for
 
 The Aggregator works, but we haven't updated the Message Store to handle subscriptions yet, so "createSubscription()" fails
 
+===================================================
+
+Chapter 5
+
+

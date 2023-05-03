@@ -18,6 +18,7 @@ function createDatabase ({ connectionString }) {
             connectedClient = client.connect()
                 .then(() => client.query('SET search_path = message_store, public'))
                 .then(() => client)
+            mydebug(3, "Connection Succeeded")
         }
 
         return connectedClient
@@ -25,6 +26,7 @@ function createDatabase ({ connectionString }) {
 
     function query (sql, values = []) {
         mytrace()
+        mydebug(1, sql + ": " + values)
 
         return connect()
             .then(client => client.query(sql, values))

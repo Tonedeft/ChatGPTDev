@@ -20,15 +20,15 @@ const debug_level = 0
 function get_level(priority) {
     switch (priority) {
         case 0:
-            return "ALL"
+            return "ALL  "
         case 1:
             return "TRACE"
         case 2:
             return "DEBUG"
         case 3:
-            return "INFO"
+            return "INFO "
         case 4:
-            return "WARN"
+            return "WARN "
         case 5:
             return "ERROR"
     }
@@ -56,10 +56,13 @@ function myeventlog(stream, event) {
     mydebug(levels.INFO, stream + ": " + JSON.stringify(event))
 }
 
-function myerrorlog(err) {
-    mydebug(levels.ERROR, JSON.stringify(err))
+function myerrorlog(err, event=null) {
+    if (event) {
+        mydebug(levels.ERROR, JSON.stringify(err) + " processing message: " + event)
+    } else {
+        mydebug(levels.ERROR, JSON.stringify(err))
+    }
 }
-
 
 module.exports = {
     mydebug,
