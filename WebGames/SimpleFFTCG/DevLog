@@ -129,3 +129,42 @@ home-page.js
 
 A whole bunch of stuff happens inside the message-store files
 to set up subscriptions and call the appropriate handlers.
+
+
+=============================================
+
+Part II
+
+Chapter 6 - Registering Users
+
+NOTE: This book's examples suck.  I'm positive I did not
+      make _that_ many typos when I was copying from it.
+
+
+=============================================
+
+Component: identity - owns registration messages
+Application: register-users - allows users to submit registration requests
+
+Need to discover the "domain messages" that model the
+new functionality
+
+Will create:
+* Registered Event
+* Register Command
+* RegistrationRejected Event
+
+* "identity" Entity
+
+* CloseAccount Command
+* AccountClosed Event
+
+It is useful to write a contract.md that defines
+the messages that this component will handle
+
+------------------------------------------------
+
+Create register-users application
+- takes user input and writes Register command to Message Store
+
+
