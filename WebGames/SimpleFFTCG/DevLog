@@ -167,4 +167,9 @@ the messages that this component will handle
 Create register-users application
 - takes user input and writes Register command to Message Store
 
+In general, Component owns all business logic
+for checking its own inputs
+
+Now we need to create a "user_credentials" table
+in the knex database.
 
